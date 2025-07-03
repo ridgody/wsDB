@@ -1,0 +1,95 @@
+ <!-- ObjectStatisticsWindow.xaml -->
+ <Window x:Class="wsDB.OracleExecutionPlan.DbmsXplan.Views.ObjectStatisticsWindow"
+         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
+         Title="객체 통계 정보" Height="500" Width="700"
+         WindowStartupLocation="CenterOwner">
+     
+     <Grid>
+         <Grid.RowDefinitions>
+             <RowDefinition Height="Auto"/>
+             <RowDefinition Height="*"/>
+             <RowDefinition Height="Auto"/>
+         </Grid.RowDefinitions>
+         
+         <!-- 상단 정보 -->
+         <Border Grid.Row="0" Background="LightBlue" Padding="10" Margin="0,0,0,5">
+             <StackPanel>
+                 <TextBlock x:Name="ObjectTypeText" FontWeight="Bold" FontSize="14"/>
+                 <TextBlock x:Name="ObjectNameText" FontSize="12" Margin="0,2,0,0"/>
+             </StackPanel>
+         </Border>
+         
+         <!-- 탭 컨트롤 -->
+         <TabControl x:Name="StatisticsTabControl" Grid.Row="1" Margin="5">
+             <TabItem Header="기본 정보">
+                 <ScrollViewer>
+                     <DataGrid x:Name="BasicInfoDataGrid"
+                             AutoGenerateColumns="False" 
+                             HeadersVisibility="Column"
+                             GridLinesVisibility="Horizontal"
+                             AlternatingRowBackground="LightGray"
+                             IsReadOnly="True">
+                         <DataGrid.Columns>
+                             <DataGridTextColumn Header="항목" Binding="{Binding Property}" Width="200"/>
+                             <DataGridTextColumn Header="값" Binding="{Binding Value}" Width="*"/>
+                         </DataGrid.Columns>
+                     </DataGrid>
+                 </ScrollViewer>
+             </TabItem>
+             
+             <TabItem Header="통계 정보">
+                 <ScrollViewer>
+                     <DataGrid x:Name="StatisticsDataGrid" 
+                             AutoGenerateColumns="False" 
+                             HeadersVisibility="Column" >
+                         <DataGrid.Columns>
+                             <DataGridTextColumn Header="통계명" Binding="{Binding StatName}" Width="200"/>
+                             <DataGridTextColumn Header="값" Binding="{Binding StatValue}" Width="150"/>
+                             <DataGridTextColumn Header="설명" Binding="{Binding Description}" Width="*"/>
+                         </DataGrid.Columns>
+                     </DataGrid>
+                 </ScrollViewer>
+             </TabItem>
+             
+             <TabItem Header="컬럼 정보" x:Name="ColumnInfoTab" >
+                 <ScrollViewer>
+                     <DataGrid x:Name="ColumnInfoDataGrid"
+                             AutoGenerateColumns="False" 
+                             HeadersVisibility="Column" >
+                         <DataGrid.Columns>
+                             <DataGridTextColumn Header="컬럼명" Binding="{Binding ColumnName}" Width="150"/>
+                             <DataGridTextColumn Header="데이터타입" Binding="{Binding DataType}" Width="100"/>
+                             <DataGridTextColumn Header="길이" Binding="{Binding DataLength}" Width="80"/>
+                             <DataGridTextColumn Header="NULL허용" Binding="{Binding Nullable}" Width="80"/>
+                             <DataGridTextColumn Header="기본값" Binding="{Binding DefaultValue}" Width="*"/>
+                         </DataGrid.Columns>
+                     </DataGrid>
+                 </ScrollViewer>
+             </TabItem>
+             
+             <TabItem Header="인덱스 정보" x:Name="IndexInfoTab" >
+                 <ScrollViewer>
+                     <DataGrid x:Name="IndexInfoDataGrid" 
+                             AutoGenerateColumns="False" 
+                             HeadersVisibility="Column" >
+                         <DataGrid.Columns>
+                             <DataGridTextColumn Header="컬럼명" Binding="{Binding ColumnName}" Width="150"/>
+                             <DataGridTextColumn Header="위치" Binding="{Binding ColumnPosition}" Width="80"/>
+                             <DataGridTextColumn Header="정렬" Binding="{Binding DescendFlag}" Width="80"/>
+                         </DataGrid.Columns>
+                     </DataGrid>
+                 </ScrollViewer>
+             </TabItem>
+             
+         </TabControl>
+         
+         <!-- 하단 버튼 -->
+         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
+             <Button x:Name="RefreshButton" Content="새로고침" Width="80" Height="30" 
+                     Margin="0,0,10,0" Click="RefreshButton_Click"/>
+             <Button x:Name="CloseButton" Content="닫기" Width="80" Height="30" 
+                     Click="CloseButton_Click" IsCancel="True"/>
+         </StackPanel>
+     </Grid>
+ </Window>

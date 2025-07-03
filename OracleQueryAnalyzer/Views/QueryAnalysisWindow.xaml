@@ -1,0 +1,51 @@
+<Window x:Class="wsDB.OracleQueryAnalyzer.Views.QueryAnalysisWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="쿼리 분석" Height="600" Width="900"
+        WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- 상단 도구모음 -->
+        <ToolBar Grid.Row="0" Margin="5">
+            <Button Name="LoadQueryButton" Content="쿼리 불러오기" Click="LoadQueryButton_Click"/>
+            <Separator/>
+            <TextBlock Text="상태:" VerticalAlignment="Center" Margin="10,0,5,0"/>
+            <TextBlock Name="StatusTextBlock" Text="쿼리를 입력하세요" VerticalAlignment="Center"/>
+        </ToolBar>
+        
+        <!-- 쿼리 입력 영역 -->
+        <GroupBox Grid.Row="1" Header="SQL 쿼리" Margin="5">
+            <TextBox Name="QueryTextBox" 
+                     AcceptsReturn="True" 
+                     AcceptsTab="True"
+                     VerticalScrollBarVisibility="Auto"
+                     HorizontalScrollBarVisibility="Auto"
+                     FontFamily="Consolas"
+                     FontSize="12"
+                     TextChanged="QueryTextBox_TextChanged"
+                     KeyDown="QueryTextBox_KeyDown"/>
+        </GroupBox>
+        
+        <!-- 하단 버튼 영역 -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
+            <Button Name="AnalyzeButton" 
+                    Content="실행계획 분석" 
+                    Click="AnalyzeButton_Click"
+                    IsEnabled="False"
+                    Width="120" 
+                    Height="30" 
+                    Margin="5"/>
+            <Button Name="CloseButton" 
+                    Content="닫기" 
+                    Click="CloseButton_Click"
+                    Width="80" 
+                    Height="30" 
+                    Margin="5"/>
+        </StackPanel>
+    </Grid>
+</Window>

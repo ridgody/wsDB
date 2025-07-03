@@ -1,0 +1,89 @@
+<!-- ExecutionPlanAnalyzer.xaml -->
+<Window x:Class="wsDB.OracleExecutionPlan.DbmsXplan.Views.DbmsXPlanWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Oracle 실행계획 분석" Height="700" Width="1200"
+        WindowStartupLocation="CenterScreen">
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        
+        <!-- 상단 툴바 -->
+        <ToolBarTray Grid.Row="0" Background="LightGray">
+            <ToolBar>
+                <Button x:Name="LoadFileButton" Content="파일 로드" Click="LoadFileButton_Click" 
+                        ToolTip="실행계획 파일 로드"/>
+                <Separator/>
+                <Button x:Name="PasteButton" Content="붙여넣기" Click="PasteButton_Click" 
+                        ToolTip="클립보드에서 실행계획 붙여넣기"/>
+                <Separator/>
+                <Button x:Name="FormatButton" Content="포맷팅" Click="FormatButton_Click" 
+                        ToolTip="실행계획 포맷팅 적용"/>
+                <Separator/>
+                <Button x:Name="ClearButton" Content="지우기" Click="ClearButton_Click" 
+                        ToolTip="현재 탭 내용 지우기"/>                
+                <Separator/>
+                <Button x:Name="AnalyzePerformanceButton" Content="성능 분석" Click="AnalyzePerformanceButton_Click" 
+                        ToolTip="실행계획 성능 분석"/>
+            </ToolBar>
+        </ToolBarTray>
+        
+        <!-- 메인 탭 컨트롤 -->
+        <TabControl x:Name="PlanTabControl" Grid.Row="1" Margin="5">
+            <TabItem Header="실행계획 1" x:Name="FirstTab">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    
+                    <!-- 실행계획 표시 영역 -->
+                    <!--IsReadOnly="True" FontFamily="Consolas"  -->
+                    <!--SizeChanged="PlanRichTextBox_SizeChanged" 
+                        MouseMove="PlanRichTextBox_MouseMove"
+                        PreviewMouseLeftButtonDown="PlanRichTextBox_PreviewMouseLeftButtonDown"-->              
+
+                    <RichTextBox x:Name="PlanRichTextBox"
+                        Grid.Row="0"
+                        FontSize="15"
+                        Background="White"
+                        Foreground="Black"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch"
+                        HorizontalScrollBarVisibility="Auto"
+                        VerticalScrollBarVisibility="Auto"
+                        FontFamily="Courier New" 
+                        AcceptsReturn="True"
+                        AcceptsTab="True"
+                        PreviewKeyDown="PlanRichTextBox_PreviewKeyDown"
+                        KeyDown="PlanRichTextBox_KeyDown"
+                        KeyUp="PlanRichTextBox_KeyUp"                       >
+                        <RichTextBox.Document>
+                            <FlowDocument x:Name="flowDocument"
+                                PageWidth="20000" 
+                                PagePadding="10"                                
+                                IsOptimalParagraphEnabled="False"
+                                IsHyphenationEnabled="False">
+                                <!-- PageWidth/Height는 코드에서 동적 설정 -->
+                            </FlowDocument>
+                        </RichTextBox.Document>
+                    </RichTextBox>
+                    
+                    <!-- 하단 상태 정보 -->
+                    <Border Grid.Row="1" Background="LightGray" BorderBrush="Gray" 
+                            BorderThickness="0,1,0,0" Height="30">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="5,0">
+                            <TextBlock Text="선택된 객체: " FontWeight="Bold"/>
+                            <TextBlock x:Name="SelectedObjectText" Text="없음" Foreground="Blue"/>
+                            <TextBlock Text=" | Ctrl+Click으로 객체 통계 보기" Margin="20,0,0,0" 
+                                     Foreground="Gray" FontStyle="Italic"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>
