@@ -28,6 +28,9 @@
                 <Separator/>
                 <Button x:Name="AnalyzePerformanceButton" Content="성능 분석" Click="AnalyzePerformanceButton_Click" 
                         ToolTip="실행계획 성능 분석"/>
+                <Separator/> 
+                <Button x:Name="SaveToRepositoryButton" Content="저장소에 저장" Click="SaveToRepositoryButton_Click" 
+                        ToolTip="현재 실행계획을 저장소에 저장"/>
             </ToolBar>
         </ToolBarTray>
         

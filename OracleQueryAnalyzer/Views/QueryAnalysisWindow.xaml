@@ -32,7 +32,7 @@
         </GroupBox>
         
         <!-- 하단 버튼 영역 -->
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">                
             <Button Name="AnalyzeButton" 
                     Content="실행계획 분석" 
                     Click="AnalyzeButton_Click"

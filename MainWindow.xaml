@@ -18,6 +18,7 @@
             <MenuItem Header="분석(_S)"> 
                 <MenuItem Header="쿼리 분석(_Q)" Click="QueryAnalysisMenu_Click"/> 
                 <MenuItem Header="실행계획(_P)" Click="ExecutionPlanAnalyzerMenuItem_Click"/> 
+                 <MenuItem Header="실행계획 저장소(_R)" Click="ExecutionPlanRepositoryMenuItem_Click"/>
             </MenuItem>
             <MenuItem Header="도움말(_H)">
                 <MenuItem Header="정보(_A)" Click="AboutMenuItem_Click"/>

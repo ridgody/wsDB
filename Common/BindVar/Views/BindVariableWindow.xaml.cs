@@ -10,25 +10,7 @@ namespace wsDB.Common.BindVar.Views
         // private static BindVariableWindow _instance;
         // private static readonly object _lock = new object();
         private bool _isRealClosing = false;
-
-        // public static BindVariableWindow Instance
-        // {
-        //     get
-        //     {
-        //         if (_instance == null)
-        //         {
-        //             lock (_lock)
-        //             {
-        //                 if (_instance == null)
-        //                 {
-        //                     _instance = new BindVariableWindow();
-        //                 }
-        //             }
-        //         }
-        //         return _instance;
-        //     }
-        // }
-
+ 
         public List<OracleBindVariable> BindVariables { get; private set; }
 
         private BindVariableWindow()
@@ -37,15 +19,6 @@ namespace wsDB.Common.BindVar.Views
             // this.Closing += BindVariableWindow_Closing;
         }
 
-        // private void BindVariableWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
-        // {
-        //     if (!_isRealClosing)
-        //     {
-        //         e.Cancel = true;
-        //         this.Hide();
-        //         // this.DialogResult = false;
-        //     }
-        // }
         
         public static (bool Success, List<OracleBindVariable> Variables) ShowBindVariableDialog(
         List<string> variableNames, Window owner = null)
@@ -68,37 +41,7 @@ namespace wsDB.Common.BindVar.Views
             
             return (false, null);
         }
-
-        // public bool? ShowDialog(List<string> variableNames, Window owner = null)
-        // {
-        //     System.Diagnostics.Debug.WriteLine("ShowDialog 시작");
-
-        //     var viewModel = new BindVariableWindowViewModel(variableNames);
-        //     DataContext = viewModel;
-
-        //     if (owner != null)
-        //     {
-        //         this.Owner = owner;
-        //         System.Diagnostics.Debug.WriteLine($"Owner 설정: {owner.GetType().Name}");
-        //     }
-
-        //     System.Diagnostics.Debug.WriteLine($"ShowDialog 호출 전 - IsVisible: {this.IsVisible}");
-
-        //     bool? result = null;
-        //     try
-        //     {
-        //         result = base.ShowDialog();
-        //         System.Diagnostics.Debug.WriteLine($"ShowDialog 결과: {result}");
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         System.Diagnostics.Debug.WriteLine($"ShowDialog 예외: {ex.Message}");
-        //         MessageBox.Show($"ShowDialog 예외: {ex.Message}");
-        //     }
-
-        //     return result;
-        // }
-
+        
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
             var viewModel = DataContext as BindVariableWindowViewModel;
@@ -107,14 +50,14 @@ namespace wsDB.Common.BindVar.Views
                 var validation = ValidateInput(viewModel.BindVariables.ToList());
                 if (!validation.IsValid)
                 {
-                    MessageBox.Show(validation.ErrorMessage, "입력 오류", 
+                    MessageBox.Show(validation.ErrorMessage, "입력 오류",
                                 MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
                 BindVariables = viewModel.BindVariables.ToList();
             }
-            
+
             this.DialogResult = true;
         }
 
@@ -150,15 +93,5 @@ namespace wsDB.Common.BindVar.Views
 
             return (true, null);
         }
-
-        // public static void ForceClose()
-        // {
-        //     if (_instance != null)
-        //     {
-        //         _instance._isRealClosing = true;
-        //         _instance.Close();
-        //         _instance = null;
-        //     }
-        // }
     }
 }

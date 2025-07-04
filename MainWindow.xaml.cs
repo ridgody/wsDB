@@ -3,7 +3,8 @@ using System.Windows;
 using System.Windows.Controls;
 using wsDB.OracleConnectionManager.Services;
 using wsDB.OracleConnectionManager.Views;
-using wsDB.OracleExecutionPlan.DbmsXplan.Views; 
+using wsDB.OracleExecutionPlan.DbmsXplan.Views;
+using wsDB.OracleExecutionPlanRepository.Views;
 using wsDB.OracleQueryAnalyzer.Views;
 
 namespace wsDB
@@ -119,6 +120,22 @@ namespace wsDB
                               MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+        private void ExecutionPlanRepositoryMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var repositoryWindow = new ExecutionPlanRepositoryWindow();
+                repositoryWindow.Owner = this;
+                repositoryWindow.Show();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"실행계획 저장소 창을 열 수 없습니다: {ex.Message}", "오류",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         #endregion
 
         private void AddNewQueryTab()

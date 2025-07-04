@@ -20,6 +20,8 @@ using wsDB.OracleExecutionPlan.DbmsXplan.Services;
 using wsDB.OracleExecutionPlan.DbmsXplanAnalyzer.Services;
 using wsDB.OracleExecutionPlan.DbmsXplanAnalyzer.Models;
 using wsDB.OracleExecutionPlan.DbmsXplanAnalyzer.Views;
+using wsDB.OracleExecutionPlanRepository.Views;
+using wsDB.OracleExecutionPlanRepository.Models;
 
 
 namespace wsDB.OracleExecutionPlan.DbmsXplan.Views
@@ -29,7 +31,7 @@ namespace wsDB.OracleExecutionPlan.DbmsXplan.Views
         private OracleConnection dbConnection;
         private Dictionary<string, ObjectStatisticsWindow> openStatWindows;
 
-         private ObjectStatisticsManager objectStatisticsManager;
+        private ObjectStatisticsManager objectStatisticsManager;
 
         // 기능별 매니저들
         private TabManager tabManager;
@@ -40,7 +42,7 @@ namespace wsDB.OracleExecutionPlan.DbmsXplan.Views
         private TextProcessor textProcessor;
         private DbmsXPlanParser planParser;
 
-         private ExecutionPlanPerformanceAnalyzer performanceAnalyzer;
+        private ExecutionPlanPerformanceAnalyzer performanceAnalyzer;
 
         public DbmsXPlanWindow(OracleConnection connection)
         {
@@ -190,20 +192,20 @@ namespace wsDB.OracleExecutionPlan.DbmsXplan.Views
 
                 if (string.IsNullOrWhiteSpace(executionPlan))
                 {
-                    MessageBox.Show("분석할 실행계획이 없습니다.", "알림", 
+                    MessageBox.Show("분석할 실행계획이 없습니다.", "알림",
                                 MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
                 // 성능 분석 실행
                 var analysisResult = performanceAnalyzer.AnalyzeExecutionPlan(executionPlan);
-                
+
                 // 결과 창 표시
                 ShowPerformanceAnalysisResult(analysisResult);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"성능 분석 중 오류가 발생했습니다: {ex.Message}", "오류", 
+                MessageBox.Show($"성능 분석 중 오류가 발생했습니다: {ex.Message}", "오류",
                             MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -231,7 +233,7 @@ namespace wsDB.OracleExecutionPlan.DbmsXplan.Views
             }
 
         }
-        
+
         private void PlanRichTextBox_KeyUp(object sender, KeyEventArgs e)
         {
             if (KeyboardShortcutHandler.HandleKeyUp(e, out bool isCtrlReleased))
@@ -277,8 +279,8 @@ namespace wsDB.OracleExecutionPlan.DbmsXplan.Views
 
             bool isAltPressed = (Keyboard.Modifiers & ModifierKeys.Alt) == ModifierKeys.Alt;
             bool isEnterPressed = e.Key == Key.Enter || e.SystemKey == Key.Enter;
-            
-            if (isEnterPressed && isAltPressed)            
+
+            if (isEnterPressed && isAltPressed)
             {
                 if (WordSelectionHandler.HandleCaretWordSelection(rtb))
                 {
@@ -296,15 +298,15 @@ namespace wsDB.OracleExecutionPlan.DbmsXplan.Views
 
         }
         #endregion
- 
+
         private void UpdateSelectedObjectDisplay(string objectName)
         {
             SelectedObjectText.Text = objectName;
         }
 
         private void LoadAndFormatExecutionPlan(string content)
-        { 
-            RichTextBox rtb = tabManager.GetCurrentRichTextBox(); 
+        {
+            RichTextBox rtb = tabManager.GetCurrentRichTextBox();
             formatter.FormatExecutionPlan(rtb, content);
         }
 
@@ -318,7 +320,7 @@ namespace wsDB.OracleExecutionPlan.DbmsXplan.Views
             else
                 return "TABLE";
         }
- 
+
         #region 윈도우 생명주기
         protected override void OnClosed(EventArgs e)
         {
@@ -335,5 +337,100 @@ namespace wsDB.OracleExecutionPlan.DbmsXplan.Views
             base.OnClosed(e);
         }
         #endregion
+
+
+        private void SaveToRepositoryButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                RichTextBox rtb = tabManager.GetCurrentRichTextBox();
+                string executionPlan = new TextRange(rtb.Document.ContentStart, rtb.Document.ContentEnd).Text;
+
+                if (string.IsNullOrWhiteSpace(executionPlan))
+                {
+                    MessageBox.Show("저장할 실행계획이 없습니다.", "알림", 
+                                MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                // 분석 정보 생성 (성능 분석이 있다면)
+                string analysisInfo = "";
+                try
+                {
+                    var analysisResult = performanceAnalyzer.AnalyzeExecutionPlan(executionPlan);
+                    analysisInfo = GenerateAnalysisSummary(analysisResult);
+                }
+                catch (Exception ex)
+                {
+                    analysisInfo = $"분석 중 오류 발생: {ex.Message}";
+                }
+
+                // 새 레코드 생성 - 자동 입력 가능한 필드들 미리 설정
+                var record = new ExecutionPlanRecord
+                {
+                    SqlId = GenerateSqlId(),
+                    ExecutionLocation = "DbmsXPlan", // 기본값 제공
+                    Query = "", // 사용자가 입력해야 함
+                    BindVariables = "", // 사용자가 입력해야 함
+                    ExecutionPlan = executionPlan, // 자동 입력
+                    AnalysisInfo = analysisInfo, // 자동 입력
+                    CreatedDate = DateTime.Now,
+                    LastAccessDate = DateTime.Now,
+                    Notes = "DbmsXPlan에서 수동 저장" // 기본 메모
+                };
+
+                // 저장 다이얼로그 표시
+                var saveDialog = new ExecutionPlanSaveDialog(record);
+                saveDialog.Owner = this;
+                
+                if (saveDialog.ShowDialog() == true)
+                {
+                    MessageBox.Show("실행계획이 저장되었습니다.", "저장 완료", 
+                                MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"저장 중 오류가 발생했습니다: {ex.Message}", "오류", 
+                            MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private string GenerateSqlId()
+        {
+            // 간단한 SQL ID 생성 (실제로는 더 정교한 로직 필요)
+            return $"SQL_{DateTime.Now:yyyyMMddHHmmss}_{new Random().Next(1000, 9999)}";
+        }
+
+        private string GenerateAnalysisSummary(PerformanceAnalysisResult result)
+        {
+            var summary = $@"성능 분석 요약:
+        - 총 단계 수: {result.Summary.TotalSteps}
+        - 총 실행시간: {result.Summary.TotalExecutionTimeSeconds:F2}초
+        - 총 Buffer 읽기: {result.Summary.TotalBufferReads:N0}
+        - 총 Physical 읽기: {result.Summary.TotalPhysicalReads:N0}
+        - 심각한 이슈: {result.Summary.CriticalIssues}개
+        - 높은 이슈: {result.Summary.HighIssues}개
+        - 가장 비싼 단계: Step {result.Summary.MostExpensiveStepId} ({result.Summary.MostExpensiveOperation})
+
+        주요 이슈:";
+
+            foreach (var issue in result.Issues.Take(5))
+            {
+                summary += $@"
+        - Step {issue.StepId}: {issue.Description}";
+            }
+
+            if (result.Recommendations.Any())
+            {
+                summary += "\n\n권장사항:";
+                foreach (var recommendation in result.Recommendations.Take(3))
+                {
+                    summary += $"\n- {recommendation}";
+                }
+            }
+
+            return summary;
+        }
     }
 }
