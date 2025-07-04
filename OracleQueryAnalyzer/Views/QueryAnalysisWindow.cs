@@ -10,6 +10,7 @@ using wsDB.OracleExecutionPlan.DbmsXplan.Views;
 using wsDB.Common.BindVar.Services;
 using wsDB.OracleExecutionPlanRepository.Models;
 using wsDB.OracleExecutionPlanRepository.Views;
+using wsDB.OracleExecutionPlanRepository.Services;
 
 namespace wsDB.OracleQueryAnalyzer.Views
 {
@@ -19,13 +20,17 @@ namespace wsDB.OracleQueryAnalyzer.Views
         private readonly QueryProcessor _queryProcessor;
         private readonly ExecutionPlanService _executionPlanService;
 
+        private readonly ExecutionPlanRepositoryService _repositoryService;
+
+
         public QueryAnalysisWindow(OracleConnection connection)
         {
             InitializeComponent();
             _dbConnection = connection;
             _queryProcessor = new QueryProcessor();
             _executionPlanService = new ExecutionPlanService(connection, this);
-            
+            _repositoryService = new ExecutionPlanRepositoryService();
+
             // Ctrl+V 단축키 설정
             this.KeyDown += QueryAnalysisWindow_KeyDown;
         }
@@ -61,7 +66,7 @@ namespace wsDB.OracleQueryAnalyzer.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"클립보드 붙여넣기 중 오류가 발생했습니다: {ex.Message}", "오류", 
+                MessageBox.Show($"클립보드 붙여넣기 중 오류가 발생했습니다: {ex.Message}", "오류",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -86,7 +91,7 @@ namespace wsDB.OracleQueryAnalyzer.Views
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"파일 로드 중 오류가 발생했습니다: {ex.Message}", "오류", 
+                    MessageBox.Show($"파일 로드 중 오류가 발생했습니다: {ex.Message}", "오류",
                         MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
@@ -100,7 +105,7 @@ namespace wsDB.OracleQueryAnalyzer.Views
         private void ValidateQuery()
         {
             string query = QueryTextBox.Text?.Trim();
-            
+
             if (string.IsNullOrEmpty(query))
             {
                 AnalyzeButton.IsEnabled = false;
@@ -125,18 +130,33 @@ namespace wsDB.OracleQueryAnalyzer.Views
         //         // 쿼리 처리 및 힌트 추가
         //         string processedQuery = _queryProcessor.ProcessQueryForExecution(originalQuery);
 
-        //         //MessageBox.Show($"processedQuery");
-
         //         // 실행계획 분석 실행
         //         var result = await _executionPlanService.AnalyzeExecutionPlanAsync(processedQuery);
 
-        //         //MessageBox.Show($"processedQuery result");
-
         //         if (result.Success)
         //         {
+        //             // 저장할 정보 준비
+        //             var bindVariables = QueryBindVariableExtractor.ExtractBindVariables(originalQuery);
+        //             string bindVariablesInfo = "";
+
+        //             if (bindVariables.Count > 0)
+        //             {
+        //                 bindVariablesInfo = string.Join("\n", bindVariables.Select(v => $":{v} = [값 없음]"));
+        //             }
+
         //             // ExecutionPlanAnalyzer 창 열기                 
         //             var planAnalyzer = new DbmsXPlanWindow(_dbConnection, result.ExecutionPlan);
         //             planAnalyzer.Owner = this;
+
+        //             // 저장 옵션 제공
+        //             var saveResult = MessageBox.Show("실행계획을 저장소에 저장하시겠습니까?", "저장 확인",
+        //                 MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+        //             if (saveResult == MessageBoxResult.Yes)
+        //             {
+        //                 await SaveExecutionPlanToRepository(originalQuery, processedQuery, bindVariablesInfo, result.ExecutionPlan);
+        //             }
+
         //             planAnalyzer.Show(); 
         //         }
         //         else
@@ -157,7 +177,6 @@ namespace wsDB.OracleQueryAnalyzer.Views
         //         AnalyzeButton.IsEnabled = true;
         //     }
         // }
-        
         private async void AnalyzeButton_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -166,19 +185,19 @@ namespace wsDB.OracleQueryAnalyzer.Views
                 StatusTextBlock.Text = "실행계획을 분석하고 있습니다...";
 
                 string originalQuery = QueryTextBox.Text.Trim();
-                
+
                 // 쿼리 처리 및 힌트 추가
                 string processedQuery = _queryProcessor.ProcessQueryForExecution(originalQuery);
 
                 // 실행계획 분석 실행
                 var result = await _executionPlanService.AnalyzeExecutionPlanAsync(processedQuery);
-                
+
                 if (result.Success)
                 {
                     // 저장할 정보 준비
                     var bindVariables = QueryBindVariableExtractor.ExtractBindVariables(originalQuery);
                     string bindVariablesInfo = "";
-                    
+
                     if (bindVariables.Count > 0)
                     {
                         bindVariablesInfo = string.Join("\n", bindVariables.Select(v => $":{v} = [값 없음]"));
@@ -187,17 +206,17 @@ namespace wsDB.OracleQueryAnalyzer.Views
                     // ExecutionPlanAnalyzer 창 열기                 
                     var planAnalyzer = new DbmsXPlanWindow(_dbConnection, result.ExecutionPlan);
                     planAnalyzer.Owner = this;
-                    
-                    // 저장 옵션 제공
+
+                    // 저장 옵션 제공 (실행계획 단계로 저장)
                     var saveResult = MessageBox.Show("실행계획을 저장소에 저장하시겠습니까?", "저장 확인",
                         MessageBoxButton.YesNo, MessageBoxImage.Question);
-                    
+
                     if (saveResult == MessageBoxResult.Yes)
                     {
-                        await SaveExecutionPlanToRepository(originalQuery, processedQuery, bindVariablesInfo, result.ExecutionPlan);
+                        await SaveExecutionPlanStage(originalQuery, bindVariablesInfo, result.ExecutionPlan);
                     }
-                    
-                    planAnalyzer.Show(); 
+
+                    planAnalyzer.Show();
                 }
                 else
                 {
@@ -208,7 +227,7 @@ namespace wsDB.OracleQueryAnalyzer.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"예기치 않은 오류가 발생했습니다: {ex.Message}", "오류", 
+                MessageBox.Show($"예기치 않은 오류가 발생했습니다: {ex.Message}", "오류",
                     MessageBoxButton.OK, MessageBoxImage.Error);
                 StatusTextBlock.Text = "분석 실패";
             }
@@ -218,32 +237,100 @@ namespace wsDB.OracleQueryAnalyzer.Views
             }
         }
 
-        // 추가된 메서드
-        private async System.Threading.Tasks.Task SaveExecutionPlanToRepository(string originalQuery, string processedQuery, string bindVariablesInfo, string executionPlan)
+        // 새로운 실행계획 단계 저장 메서드 추가
+        private async System.Threading.Tasks.Task SaveExecutionPlanStage(string query, string bindVariablesInfo, string executionPlan)
         {
             try
             {
-                var record = new ExecutionPlanRecord
-                {
-                    SqlId = GenerateSqlId(),
-                    ExecutionLocation = "QueryAnalyzer",
-                    Query = originalQuery,
-                    BindVariables = bindVariablesInfo,
-                    ExecutionPlan = executionPlan,
-                    AnalysisInfo = $"쿼리 분석기에서 생성됨\n처리된 쿼리:\n{processedQuery}",
-                    CreatedDate = DateTime.Now,
-                    LastAccessDate = DateTime.Now,
-                    Notes = "쿼리 분석기를 통해 자동 생성된 실행계획"
-                };
+                string sqlId = GenerateSqlId();
+                string executionLocation = "QueryAnalyzer";
 
-                var saveDialog = new ExecutionPlanSaveDialog(record);
-                saveDialog.Owner = this;
-                saveDialog.ShowDialog();
+                // 실행계획 단계에서 저장 또는 업데이트 (SqlId, ExecutionLocation, Query, ExecutionPlan)
+                int savedId = await _repositoryService.SaveOrUpdateExecutionPlanAsync(
+                    sqlId, executionLocation, query, executionPlan, bindVariablesInfo,
+                    "쿼리 분석기에서 실행계획 포함하여 저장");
+
+                MessageBox.Show($"실행계획이 저장소에 저장되었습니다.\nSQL ID: {sqlId}", "저장 완료",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+
+                StatusTextBlock.Text = $"실행계획 저장 완료 (ID: {savedId})";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"저장 중 오류가 발생했습니다: {ex.Message}", "저장 오류",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        // 기존 SaveExecutionPlanToRepository 메서드는 완전히 삭제
+
+        // 추가된 메서드
+        // private async System.Threading.Tasks.Task SaveExecutionPlanToRepository(string originalQuery, string processedQuery, string bindVariablesInfo, string executionPlan)
+        // {
+        //     try
+        //     {
+        //         var record = new ExecutionPlanRecord
+        //         {
+        //             SqlId = GenerateSqlId(),
+        //             ExecutionLocation = "QueryAnalyzer",
+        //             Query = originalQuery,
+        //             BindVariables = bindVariablesInfo,
+        //             ExecutionPlan = executionPlan,
+        //             AnalysisInfo = $"쿼리 분석기에서 생성됨\n처리된 쿼리:\n{processedQuery}",
+        //             CreatedDate = DateTime.Now,
+        //             LastAccessDate = DateTime.Now,
+        //             Notes = "쿼리 분석기를 통해 자동 생성된 실행계획"
+        //         };
+
+        //         var saveDialog = new ExecutionPlanSaveDialog(record);
+        //         saveDialog.Owner = this;
+        //         saveDialog.ShowDialog();
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         MessageBox.Show($"저장 중 오류가 발생했습니다: {ex.Message}", "저장 오류",
+        //             MessageBoxButton.OK, MessageBoxImage.Warning);
+        //     }
+        // }
+
+        // 새로운 저장 버튼 이벤트 핸들러 추가
+        private async void SaveToRepositoryButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string query = QueryTextBox.Text.Trim();
+                if (string.IsNullOrWhiteSpace(query))
+                {
+                    MessageBox.Show("저장할 쿼리가 없습니다.", "입력 오류", 
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                // 바인드 변수 추출
+                var bindVariables = QueryBindVariableExtractor.ExtractBindVariables(query);
+                string bindVariablesInfo = "";
+                
+                if (bindVariables.Count > 0)
+                {
+                    bindVariablesInfo = string.Join("\n", bindVariables.Select(v => $":{v} = [값 없음]"));
+                }
+
+                // 쿼리 분석 단계에서 저장 (SqlId, ExecutionLocation, Query만)
+                string sqlId = GenerateSqlId();
+                string executionLocation = "QueryAnalyzer";
+                
+                int savedId = await _repositoryService.SaveQueryAnalysisAsync(
+                    sqlId, executionLocation, query, bindVariablesInfo, "쿼리 분석 단계에서 저장");
+
+                MessageBox.Show($"쿼리가 저장소에 저장되었습니다.\nSQL ID: {sqlId}", "저장 완료", 
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+
+                StatusTextBlock.Text = $"저장 완료 (ID: {savedId})";
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"저장 중 오류가 발생했습니다: {ex.Message}", "저장 오류", 
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -252,9 +339,10 @@ namespace wsDB.OracleQueryAnalyzer.Views
             return $"QA_{DateTime.Now:yyyyMMddHHmmss}_{new Random().Next(1000, 9999)}";
         }
 
-                private void CloseButton_Click(object sender, RoutedEventArgs e)
-                {
-                    this.Close();
-                }
-            }
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.Close();
+        }
+
+    }
 }

@@ -26,8 +26,14 @@ namespace wsDB.OracleExecutionPlan.DbmsXplanAnalyzer.ViewModels
 
         public string HighIssuesDisplay => 
             $"높은 이슈: {Summary.HighIssues}개";
+        
+        public string MediumIssuesDisplay =>     // 추가 필요
+        $"중간 이슈: {Summary.MediumIssues}개";
 
-        public string MostExpensiveDisplay => 
+        public string LowIssuesDisplay =>        // 추가 필요
+        $"낮은 이슈: {Summary.LowIssues}개";
+
+        public string MostExpensiveDisplay =>
             $"가장 비싼 단계: {Summary.MostExpensiveStepId} ({Summary.MostExpensiveOperation})";
     }
 }

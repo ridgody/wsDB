@@ -22,6 +22,7 @@ using wsDB.OracleExecutionPlan.DbmsXplanAnalyzer.Models;
 using wsDB.OracleExecutionPlan.DbmsXplanAnalyzer.Views;
 using wsDB.OracleExecutionPlanRepository.Views;
 using wsDB.OracleExecutionPlanRepository.Models;
+using wsDB.OracleExecutionPlanRepository.Services;
 
 
 namespace wsDB.OracleExecutionPlan.DbmsXplan.Views
@@ -43,12 +44,15 @@ namespace wsDB.OracleExecutionPlan.DbmsXplan.Views
         private DbmsXPlanParser planParser;
 
         private ExecutionPlanPerformanceAnalyzer performanceAnalyzer;
+        
+        private readonly ExecutionPlanRepositoryService _repositoryService;
 
         public DbmsXPlanWindow(OracleConnection connection)
         {
             InitializeComponent();
             dbConnection = connection;
             openStatWindows = new Dictionary<string, ObjectStatisticsWindow>();
+            _repositoryService = new ExecutionPlanRepositoryService(); 
 
             InitializeManagers();
             SetupEventHandlers();
@@ -212,7 +216,11 @@ namespace wsDB.OracleExecutionPlan.DbmsXplan.Views
 
         private void ShowPerformanceAnalysisResult(PerformanceAnalysisResult result)
         {
-            var resultWindow = new PerformanceAnalysisResultWindow(result);
+            RichTextBox rtb = tabManager.GetCurrentRichTextBox();
+            string executionPlan = new TextRange(rtb.Document.ContentStart, rtb.Document.ContentEnd).Text;
+            
+            // 수정된 생성자 호출 (실행계획 텍스트도 함께 전달)
+            var resultWindow = new PerformanceAnalysisResultWindow(result, executionPlan);
             resultWindow.Owner = this;
             resultWindow.Show();
         }
@@ -339,7 +347,7 @@ namespace wsDB.OracleExecutionPlan.DbmsXplan.Views
         #endregion
 
 
-        private void SaveToRepositoryButton_Click(object sender, RoutedEventArgs e)
+        private async void SaveToRepositoryButton_Click(object sender, RoutedEventArgs e)
         {
             try
             {
@@ -349,57 +357,53 @@ namespace wsDB.OracleExecutionPlan.DbmsXplan.Views
                 if (string.IsNullOrWhiteSpace(executionPlan))
                 {
                     MessageBox.Show("저장할 실행계획이 없습니다.", "알림", 
-                                MessageBoxButton.OK, MessageBoxImage.Warning);
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
-                // 분석 정보 생성 (성능 분석이 있다면)
-                string analysisInfo = "";
-                try
-                {
-                    var analysisResult = performanceAnalyzer.AnalyzeExecutionPlan(executionPlan);
-                    analysisInfo = GenerateAnalysisSummary(analysisResult);
-                }
-                catch (Exception ex)
-                {
-                    analysisInfo = $"분석 중 오류 발생: {ex.Message}";
-                }
-
-                // 새 레코드 생성 - 자동 입력 가능한 필드들 미리 설정
-                var record = new ExecutionPlanRecord
-                {
-                    SqlId = GenerateSqlId(),
-                    ExecutionLocation = "DbmsXPlan", // 기본값 제공
-                    Query = "", // 사용자가 입력해야 함
-                    BindVariables = "", // 사용자가 입력해야 함
-                    ExecutionPlan = executionPlan, // 자동 입력
-                    AnalysisInfo = analysisInfo, // 자동 입력
-                    CreatedDate = DateTime.Now,
-                    LastAccessDate = DateTime.Now,
-                    Notes = "DbmsXPlan에서 수동 저장" // 기본 메모
-                };
-
-                // 저장 다이얼로그 표시
-                var saveDialog = new ExecutionPlanSaveDialog(record);
-                saveDialog.Owner = this;
+                // 입력 다이얼로그를 통해 사용자로부터 정보 수집
+                var inputDialog = new ExecutionPlanInputDialog();
+                inputDialog.Owner = this;
                 
-                if (saveDialog.ShowDialog() == true)
+                if (inputDialog.ShowDialog() == true)
                 {
-                    MessageBox.Show("실행계획이 저장되었습니다.", "저장 완료", 
-                                MessageBoxButton.OK, MessageBoxImage.Information);
+                    // 성능 분석 수행
+                    string analysisInfo = "";
+                    try
+                    {
+                        var performanceAnalyzer = new ExecutionPlanPerformanceAnalyzer();
+                        var analysisResult = performanceAnalyzer.AnalyzeExecutionPlan(executionPlan);
+                        analysisInfo = GenerateAnalysisSummary(analysisResult);
+                    }
+                    catch (Exception ex)
+                    {
+                        analysisInfo = $"분석 중 오류 발생: {ex.Message}";
+                    }
+
+                    // 실행계획 단계에서 저장 또는 업데이트
+                    int savedId = await _repositoryService.SaveOrUpdateExecutionPlanAsync(
+                        inputDialog.SqlId,
+                        inputDialog.ExecutionLocation, 
+                        inputDialog.Query,
+                        executionPlan,
+                        inputDialog.BindVariables,
+                        "DbmsXPlan에서 실행계획 포함하여 저장");
+
+                    MessageBox.Show($"실행계획이 저장되었습니다.\nSQL ID: {inputDialog.SqlId}\n저장 ID: {savedId}", 
+                        "저장 완료", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"저장 중 오류가 발생했습니다: {ex.Message}", "오류", 
-                            MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         private string GenerateSqlId()
         {
             // 간단한 SQL ID 생성 (실제로는 더 정교한 로직 필요)
-            return $"SQL_{DateTime.Now:yyyyMMddHHmmss}_{new Random().Next(1000, 9999)}";
+            return $"DBMS_{DateTime.Now:yyyyMMddHHmmss}_{new Random().Next(1000, 9999)}";
         }
 
         private string GenerateAnalysisSummary(PerformanceAnalysisResult result)

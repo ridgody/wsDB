@@ -28,6 +28,8 @@ namespace wsDB.OracleExecutionPlan.DbmsXplanAnalyzer.Models
         public int HighImpactSteps { get; set; }
         public int CriticalIssues { get; set; }
         public int HighIssues { get; set; }
+        public int MediumIssues { get; set; }    // 추가 필요    
+        public int LowIssues { get; set; }       // 추가 필요
         public string MostExpensiveOperation { get; set; }
         public int MostExpensiveStepId { get; set; }
     }

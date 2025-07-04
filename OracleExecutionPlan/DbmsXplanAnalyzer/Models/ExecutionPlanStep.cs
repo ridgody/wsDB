@@ -25,6 +25,8 @@ namespace wsDB.OracleExecutionPlan.DbmsXplanAnalyzer.Models
         public string PredicateInfo { get; set; } // Predicate Information에서 가져온 상세 정보
         
 
+        public long Rows => ActualRows;  // 추가
+
         // 계산된 속성들
         public double ActualTimeSeconds { get; set; }
         public double BufferToRowRatio { get; set; }

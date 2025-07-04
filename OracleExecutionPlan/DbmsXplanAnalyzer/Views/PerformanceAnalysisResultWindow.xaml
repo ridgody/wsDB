@@ -7,6 +7,7 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         
@@ -33,9 +34,25 @@
                 <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Summary.MostExpensiveDisplay}"/>
             </Grid>
         </GroupBox>
-        
+        <StackPanel Grid.Row="1" 
+                Orientation="Horizontal" 
+                HorizontalAlignment="Right" 
+                Margin="5">
+        <Button x:Name="SaveAnalysisButton" 
+                Content="분석 결과 저장" 
+                Width="120" 
+                Height="30" 
+                Margin="5"
+                Click="SaveAnalysisButton_Click"/>
+        <Button x:Name="CloseButton" 
+                Content="닫기" 
+                Width="80" 
+                Height="30" 
+                Margin="5"
+                Click="CloseButton_Click"/>
+        </StackPanel>
         <!-- 탭 컨트롤 -->
-        <TabControl Grid.Row="1" Margin="5">
+        <TabControl Grid.Row="2" Margin="5">
             <!-- 성능 이슈 탭 -->
             <TabItem Header="성능 이슈">
                 <DataGrid ItemsSource="{Binding Issues}" 

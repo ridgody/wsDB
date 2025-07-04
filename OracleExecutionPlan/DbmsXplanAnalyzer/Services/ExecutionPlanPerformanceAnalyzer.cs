@@ -570,7 +570,9 @@ namespace wsDB.OracleExecutionPlan.DbmsXplanAnalyzer.Services
                 TotalSteps = _steps.Count,
                 HighImpactSteps = _steps.Count(s => s.Severity >= PerformanceSeverity.High),
                 CriticalIssues = _issues.Count(i => i.Severity == PerformanceSeverity.Critical),
-                HighIssues = _issues.Count(i => i.Severity == PerformanceSeverity.High)
+                HighIssues = _issues.Count(i => i.Severity == PerformanceSeverity.High),
+                MediumIssues = _issues.Count(i => i.Severity == PerformanceSeverity.Medium), // 추가
+                LowIssues = _issues.Count(i => i.Severity == PerformanceSeverity.Low)        // 추가
             };
 
             var mostExpensive = _steps.OrderByDescending(s => s.ActualTimeSeconds).FirstOrDefault();

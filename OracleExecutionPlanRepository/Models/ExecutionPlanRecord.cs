@@ -20,6 +20,45 @@ namespace wsDB.OracleExecutionPlanRepository.Models
         [Key]
         public int Id { get; set; }
 
+        /// <summary>
+        /// 저장 단계 (QueryAnalysis, ExecutionPlan, PerformanceAnalysis)
+        /// </summary>
+        public string SaveStage { get; set; } = "";
+
+        /// <summary>
+        /// 마지막 업데이트 단계
+        /// </summary>
+        public string LastUpdateStage { get; set; } = "";
+
+        /// <summary>
+        /// 각 필드가 설정되었는지 확인하는 헬퍼 속성들
+        /// </summary>
+        public bool HasQuery => !string.IsNullOrWhiteSpace(Query);
+        public bool HasExecutionPlan => !string.IsNullOrWhiteSpace(ExecutionPlan);
+        public bool HasAnalysisInfo => !string.IsNullOrWhiteSpace(AnalysisInfo);
+
+        /// <summary>
+        /// 저장 가능한 단계인지 확인
+        /// </summary>
+        /// <param name="stage">확인할 단계</param>
+        /// <returns>저장 가능하면 true</returns>
+        public bool CanSaveAtStage(string stage)
+        {
+            switch (stage.ToLower())
+            {
+                case "queryanalysis":
+                    return !string.IsNullOrWhiteSpace(SqlId) &&
+                           !string.IsNullOrWhiteSpace(ExecutionLocation) &&
+                           !string.IsNullOrWhiteSpace(Query);
+                case "executionplan":
+                    return CanSaveAtStage("queryanalysis") && HasExecutionPlan;
+                case "performanceanalysis":
+                    return CanSaveAtStage("executionplan") && HasAnalysisInfo;
+                default:
+                    return false;
+            }
+        }
+
         public string SqlId
         {
             get => _sqlId;
